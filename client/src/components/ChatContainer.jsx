@@ -14,16 +14,37 @@ const ChatContainer = ({ selectiveUser, setSelectiveUser }) => {
   }, []);
 
   // AI Translation/Improvement function (placeholder for Gemini API)
-  const handleAIImprove = () => {
-    if (!message.trim()) return;
+  const handleAIImprove = async () => {
+    try {
+      if (!message?.trim()) return;
+      setIsTranslating(true);
 
-    setIsTranslating(true);
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-    // Placeholder - Gemini API integration will be added here later
-    setTimeout(() => {
-      alert("AI Improve button clicked! Gemini API integration pending.");
+      const res = await fetch(`${API_BASE}/api/ai/translate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ text: message }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.message || "AI translation failed");
+      }
+
+      const improved = (data.improvedText || "").trim();
+      if (improved) setMessage(improved);
+    } catch (err) {
+      console.error("AI error:", err);
+      // Optional: show a toast here
+    } finally {
       setIsTranslating(false);
-    }, 1000);
+    }
   };
 
   return selectiveUser ? (
